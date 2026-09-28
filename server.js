@@ -65,6 +65,13 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('host-end-question', (pin) => {
+        const quiz = quizzes.get(pin);
+        if (quiz && quiz.hostId === socket.id && quiz.state === 'question') {
+            endQuestion(pin);
+        }
+    });
+
     // ==========================================
     // PLAYER EVENTS
     // ==========================================

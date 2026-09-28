@@ -63,7 +63,7 @@
         <div id="view-leaderboard" class="glass-panel animate-fade-in hidden" style="flex: 1; max-width: 800px; margin: 0 auto; width: 100%;">
             <div class="flex-between">
                 <h1 class="title-text" style="color: var(--primary-purple); margin:0;">Leaderboard</h1>
-                <button id="next-btn" class="btn btn-primary" style="font-size: 1.5rem; padding: 1rem 3rem;">Next</button>
+                <button id="next-btn" class="btn btn-primary" style="font-size: 1.5rem; padding: 1rem 3rem;">Next Question</button>
             </div>
             
             <div id="correct-answer-display" style="margin: 2rem 0; padding: 1.5rem; background: #dcfce7; border-radius: 12px; border: 2px solid #22c55e; color: #166534; font-size: 1.5rem; text-align: center;">
@@ -249,9 +249,8 @@
         });
 
         document.getElementById('skip-btn').addEventListener('click', () => {
-             // In a real app we'd tell the server to end it early.
-             // For now we can just rely on timer or all answered. 
-             // To simplify, we'll just wait or answer from a dummy client.
+             // Force the question to end early
+             socket.emit('host-end-question', currentPin);
         });
 
         socket.on('question-ended', (data) => {
