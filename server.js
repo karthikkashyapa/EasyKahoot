@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
     // PLAYER EVENTS
     // ==========================================
 
-    socket.on('player-join', ({ pin, name }) => {
+    socket.on('check-room', ({ pin, name }) => {
         const quiz = quizzes.get(pin);
         if (!quiz) {
             socket.emit('join-error', 'Quiz not found');
@@ -90,15 +90,53 @@ io.on('connection', (socket) => {
             return;
         }
 
-        socket.join(pin);
-        quiz.players.set(socket.id, {
-            id: socket.id,
-            name,
-            score: 0,
-            lastAnswerCorrect: false,
-            streak: 0,
-            hasAnsweredCurrent: false
+        socket.emit('join-success', { name });
+    });
+
+    socket.on('player-join', ({ pin, name }) => {
+        const quiz = quizzes.get(pin);
+        if (!quiz) {
+            socket.emit('join-error', 'Quiz not found');
+            return;
+        }
+        
+        // If they are re-joining (or taking over a dropped session)
+        // just delete the old one to avoid race conditions
+        let existingSocketId = null;
+        quiz.players.forEach((p, id) => {
+            if (p.name.toLowerCase() === name.toLowerCase()) {
+                existingSocketId = id;
+            }
         });
+        
+        if (existingSocketId) {
+            // Transfer score and state
+            const oldData = quiz.players.get(existingSocketId);
+            quiz.players.delete(existingSocketId);
+            
+            socket.join(pin);
+            quiz.players.set(socket.id, {
+                ...oldData,
+                id: socket.id
+            });
+        } else {
+            // Brand new player
+            if (quiz.state !== 'lobby') {
+                socket.emit('join-error', 'Quiz already started');
+                return;
+            }
+            
+            socket.join(pin);
+            quiz.players.set(socket.id, {
+                id: socket.id,
+                name,
+                score: 0,
+                lastAnswerCorrect: false,
+                streak: 0,
+                hasAnsweredCurrent: false
+            });
+        }
+
 
         socket.emit('join-success', { name });
         

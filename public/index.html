@@ -54,7 +54,7 @@
                     const name = nameInput.value.trim();
                     
                     // Attempt to join
-                    socket.emit('player-join', { pin, name });
+                    socket.emit('check-room', { pin, name });
                     joinBtn.textContent = 'Joining...';
                     joinBtn.disabled = true;
                 } else {
