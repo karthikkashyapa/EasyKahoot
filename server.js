@@ -82,7 +82,10 @@ io.on('connection', (socket) => {
 
         let nameExists = false;
         quiz.players.forEach(p => {
-            if (p.name.toLowerCase() === name.toLowerCase()) nameExists = true;
+            // Only consider it 'taken' if the player is actively connected
+            if (p.name.toLowerCase() === name.toLowerCase() && !p.disconnected) {
+                nameExists = true;
+            }
         });
 
         if (nameExists) {
@@ -112,12 +115,17 @@ io.on('connection', (socket) => {
         if (existingSocketId) {
             // Transfer score and state
             const oldData = quiz.players.get(existingSocketId);
+            
+            // Clear their disconnect timeout so they don't get deleted
+            if (oldData.disconnectTimeout) clearTimeout(oldData.disconnectTimeout);
+            
             quiz.players.delete(existingSocketId);
             
             socket.join(pin);
             quiz.players.set(socket.id, {
                 ...oldData,
-                id: socket.id
+                id: socket.id,
+                disconnected: false
             });
         } else {
             // Brand new player
@@ -201,23 +209,31 @@ io.on('connection', (socket) => {
                 clearTimeout(quiz.timer);
                 quizzes.delete(pin);
             } else if (quiz.players.has(socket.id)) {
-                // Handle player disconnect
-                quiz.players.delete(socket.id);
-                if (quiz.state === 'lobby') {
-                    const playersList = Array.from(quiz.players.values()).map(p => p.name);
-                    io.to(quiz.hostId).emit('lobby-update', playersList);
-                } else if (quiz.state === 'question') {
-                    // Update host about answered count
-                     io.to(quiz.hostId).emit('player-answered', { 
-                        answeredCount: Array.from(quiz.players.values()).filter(p => p.hasAnsweredCurrent).length,
-                        totalCount: quiz.players.size
-                    });
+                // Give player 60 seconds buffer to rejoin
+                const player = quiz.players.get(socket.id);
+                player.disconnected = true;
+                
+                player.disconnectTimeout = setTimeout(() => {
+                    quiz.players.delete(socket.id);
                     
-                    // Check if remaining players have all answered
-                    if (quiz.players.size > 0 && Array.from(quiz.players.values()).every(p => p.hasAnsweredCurrent)) {
-                        endQuestion(pin);
+                    if (quiz.state === 'lobby') {
+                        // Only show actively connected players in the lobby
+                        const playersList = Array.from(quiz.players.values()).filter(p => !p.disconnected).map(p => p.name);
+                        io.to(quiz.hostId).emit('lobby-update', playersList);
+                    } else if (quiz.state === 'question') {
+                        // Update host about answered count
+                         io.to(quiz.hostId).emit('player-answered', { 
+                            answeredCount: Array.from(quiz.players.values()).filter(p => p.hasAnsweredCurrent && !p.disconnected).length,
+                            totalCount: Array.from(quiz.players.values()).filter(p => !p.disconnected).length
+                        });
+                        
+                        // Check if remaining players have all answered
+                        const activePlayers = Array.from(quiz.players.values()).filter(p => !p.disconnected);
+                        if (activePlayers.length > 0 && activePlayers.every(p => p.hasAnsweredCurrent)) {
+                            endQuestion(pin);
+                        }
                     }
-                }
+                }, 180000); // 3 minutes (180 seconds)
             }
         });
     });

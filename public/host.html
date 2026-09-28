@@ -263,12 +263,28 @@
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
             
-            data.leaderboard.forEach(p => {
+            data.leaderboard.forEach((p, index) => {
                 const li = document.createElement('li');
                 li.className = 'leaderboard-item';
+                
+                let rankIcon = `<span style="font-size: 1.5rem; color: #94a3b8; font-weight: 900;">#${index + 1}</span>`;
+                if (index === 0) rankIcon = `<span style="font-size: 2.5rem;" title="1st Place">🥇</span>`;
+                if (index === 1) rankIcon = `<span style="font-size: 2.5rem;" title="2nd Place">🥈</span>`;
+                if (index === 2) rankIcon = `<span style="font-size: 2.5rem;" title="3rd Place">🥉</span>`;
+
+                const streakBadge = p.streak > 2 
+                    ? `<span style="font-size: 1.2rem; background: #fee2e2; padding: 0.2rem 0.8rem; border-radius: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 4px;">🔥 ${p.streak}</span>` 
+                    : '';
+
                 li.innerHTML = `
-                    <span>${p.name} ${p.streak > 2 ? '🔥' : ''}</span>
-                    <span>${p.score}</span>
+                    <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1;">
+                        <div style="min-width: 50px; text-align: center;">${rankIcon}</div>
+                        <span style="font-size: 1.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;">${p.name}</span>
+                        ${streakBadge}
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 900; color: var(--primary-purple); background: #f8fafc; padding: 0.5rem 1.5rem; border-radius: 12px; min-width: 150px; text-align: right; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                        ${p.score} <span style="font-size: 1rem; color: var(--text-muted);">pts</span>
+                    </div>
                 `;
                 list.appendChild(li);
             });
