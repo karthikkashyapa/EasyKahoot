@@ -12,24 +12,24 @@
     <div class="container" id="app-container">
         <!-- Setup View -->
         <div id="view-setup" class="glass-panel animate-fade-in" style="max-width: 600px; margin: auto;">
-            <h1 class="text-center" style="margin-bottom: 2rem; color: var(--accent-color);">Host a Quiz</h1>
-            <p style="margin-bottom: 1rem; color: var(--text-muted);">Upload a quiz file in Aiken format (.txt or .aiken) to start.</p>
+            <h1 class="text-center title-text" style="margin-bottom: 2rem; color: var(--primary-purple);">Host a Quiz</h1>
+            <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 1.2rem; font-weight: bold; text-align: center;">Upload a quiz file in Aiken format (.txt or .aiken) to start.</p>
             <input type="file" id="quiz-file" accept=".txt,.aiken">
             
-            <div id="setup-preview" class="hidden" style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                <p>Questions loaded: <span id="q-count" style="font-weight:bold; color: var(--accent-color);">0</span></p>
-                <button id="create-btn" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Quiz Room</button>
+            <div id="setup-preview" class="hidden" style="margin-top: 1rem; padding: 1.5rem; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; text-align: center;">
+                <p style="font-size: 1.2rem;">Questions loaded: <span id="q-count" style="font-weight:900; color: var(--btn-primary); font-size: 1.5rem;">0</span></p>
+                <button id="create-btn" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; font-size: 1.5rem; padding: 1.2rem;">Create Quiz Room</button>
             </div>
-            <div id="setup-error" style="color: var(--danger-color); margin-top: 1rem;"></div>
+            <div id="setup-error" style="color: var(--opt-red); margin-top: 1rem; text-align: center; font-weight: bold;"></div>
         </div>
 
         <!-- Lobby View -->
         <div id="view-lobby" class="glass-panel animate-fade-in hidden" style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center;">
-            <h2>Join at <span style="color: var(--accent-color);">localhost:3000</span> or your IP</h2>
+            <h2 style="font-size: 2.5rem; color: var(--text-muted);">Join at <span style="color: var(--primary-blue);">localhost:3000</span></h2>
             <div class="pin-display" id="lobby-pin">------</div>
-            <div class="flex-between" style="max-width: 400px; margin: 0 auto; width: 100%;">
-                <p><span id="player-count">0</span> Players</p>
-                <button id="start-btn" class="btn btn-success" disabled>Start Quiz</button>
+            <div class="flex-between" style="max-width: 500px; margin: 0 auto; width: 100%; background: #f1f5f9; padding: 1rem 2rem; border-radius: 16px;">
+                <p style="font-size: 1.5rem; font-weight: bold;"><span id="player-count">0</span> Players</p>
+                <button id="start-btn" class="btn btn-success" style="font-size: 1.5rem;" disabled>Start Quiz</button>
             </div>
             <div class="lobby-players" id="lobby-players">
                 <!-- Players will appear here -->
@@ -39,8 +39,8 @@
         <!-- Question View -->
         <div id="view-question" class="glass-panel animate-fade-in hidden" style="flex: 1; display: flex; flex-direction: column;">
             <div class="flex-between">
-                <span id="q-number" style="font-size: 1.5rem; font-weight: bold; color: var(--text-muted);">Q 1/10</span>
-                <span id="q-timer" style="font-size: 2rem; font-weight: bold; color: var(--danger-color);">20</span>
+                <span id="q-number" style="font-size: 2rem; font-weight: 900; color: var(--text-muted);">Q 1/10</span>
+                <span id="q-timer" style="font-size: 3rem; font-weight: 900; color: var(--opt-red); background: #fee2e2; padding: 0.5rem 1.5rem; border-radius: 50px;">20</span>
             </div>
             <div class="progress-container" style="margin-top: 1rem;">
                 <div class="progress-bar" id="q-progress"></div>
@@ -48,26 +48,26 @@
             
             <h1 id="q-text" class="text-center" style="font-size: 2.5rem; margin: 2rem 0; flex: 1; display: flex; align-items: center; justify-content: center;">Question text?</h1>
             
-            <div style="text-align: center; margin-bottom: 1rem;">
-                <span id="q-answers-count" style="font-size: 1.5rem; font-weight: bold;">0</span> Answers
+            <div style="text-align: center; margin-bottom: 1rem; background: #f8fafc; padding: 1rem; border-radius: 16px;">
+                <span id="q-answers-count" style="font-size: 2rem; font-weight: 900; color: var(--primary-purple);">0</span> <span style="font-size: 1.2rem; font-weight: bold; color: var(--text-muted);">Answers</span>
             </div>
 
             <div class="option-grid" id="q-options">
                 <!-- Options -->
             </div>
             
-            <button id="skip-btn" class="btn" style="background: rgba(255,255,255,0.1); margin-top: 1rem; align-self: flex-end;">Skip Timer</button>
+            <button id="skip-btn" class="btn" style="background: #e2e8f0; color: var(--text-muted); margin-top: 1.5rem; align-self: flex-end;">Skip Timer</button>
         </div>
 
         <!-- Leaderboard View -->
         <div id="view-leaderboard" class="glass-panel animate-fade-in hidden" style="flex: 1; max-width: 800px; margin: 0 auto; width: 100%;">
             <div class="flex-between">
-                <h1 style="color: var(--accent-color);">Leaderboard</h1>
-                <button id="next-btn" class="btn btn-primary">Next</button>
+                <h1 class="title-text" style="color: var(--primary-purple); margin:0;">Leaderboard</h1>
+                <button id="next-btn" class="btn btn-primary" style="font-size: 1.5rem; padding: 1rem 3rem;">Next</button>
             </div>
             
-            <div id="correct-answer-display" style="margin: 2rem 0; padding: 1rem; background: rgba(0,255,0,0.1); border-radius: 8px; border: 1px solid var(--accent-color);">
-                Correct Answer: <span id="correct-answer-text" style="font-weight: bold;"></span>
+            <div id="correct-answer-display" style="margin: 2rem 0; padding: 1.5rem; background: #dcfce7; border-radius: 12px; border: 2px solid #22c55e; color: #166534; font-size: 1.5rem; text-align: center;">
+                Correct Answer: <span id="correct-answer-text" style="font-weight: 900;"></span>
             </div>
 
             <ul class="leaderboard-list" id="leaderboard-list">
@@ -77,13 +77,13 @@
 
         <!-- End View -->
         <div id="view-end" class="glass-panel animate-fade-in hidden" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
-            <h1 style="font-size: 4rem; margin-bottom: 2rem; background: -webkit-linear-gradient(45deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Podium</h1>
+            <h1 style="font-size: 5rem; margin-bottom: 3rem; background: -webkit-linear-gradient(45deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Montserrat', sans-serif; font-weight: 900;">Podium</h1>
             
-            <div id="podium-container" style="display: flex; justify-content: center; align-items: flex-end; height: 300px; gap: 1rem; margin-bottom: 2rem;">
+            <div id="podium-container" style="display: flex; justify-content: center; align-items: flex-end; height: 350px; gap: 1rem; margin-bottom: 3rem;">
                 <!-- Podium bars will be injected here -->
             </div>
             
-            <button id="home-btn" class="btn btn-primary">Back to Home</button>
+            <button id="home-btn" class="btn btn-primary" style="font-size: 1.5rem; margin: 0 auto;">Back to Home</button>
         </div>
     </div>
 

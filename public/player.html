@@ -9,9 +9,9 @@
 </head>
 <body>
     <!-- Top bar for player info -->
-    <div style="background: rgba(0,0,0,0.5); padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 10;">
-        <span id="player-name-display" style="font-weight: bold;">Player</span>
-        <div style="background: rgba(255,255,255,0.2); padding: 0.2rem 0.8rem; border-radius: 12px; font-weight: bold;">
+    <div class="player-top-bar">
+        <span id="player-name-display" style="font-weight: 900; color: var(--primary-purple);">Player</span>
+        <div class="score-badge">
             Score: <span id="player-score-display">0</span>
         </div>
     </div>
@@ -28,9 +28,9 @@
         <!-- Question View -->
         <div id="view-question" class="animate-fade-in hidden" style="flex: 1; display: flex; flex-direction: column; width: 100%;">
             
-            <div class="flex-between" style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
-                <span id="q-number" style="font-weight: bold; color: var(--text-muted);">Q 1</span>
-                <span id="q-timer" style="font-weight: bold; color: var(--danger-color); font-size: 1.2rem;">20</span>
+            <div class="flex-between" style="background: #ffffff; padding: 1rem 1.5rem; border-radius: 16px; margin-bottom: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                <span id="q-number" style="font-size: 1.5rem; font-weight: 900; color: var(--text-muted);">Q 1</span>
+                <span id="q-timer" style="font-size: 2rem; font-weight: 900; color: var(--opt-red); background: #fee2e2; padding: 0.2rem 1rem; border-radius: 50px;">20</span>
             </div>
 
             <!-- Wait, in real Kahoot, questions aren't shown on the player's screen, only shapes! 
@@ -51,17 +51,19 @@
 
         <!-- Result View -->
         <div id="view-result" class="animate-fade-in hidden" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; border-radius: 24px;">
-            <h1 id="result-title" style="font-size: 3rem; margin-bottom: 1rem;">Correct!</h1>
-            
-            <div id="result-streak" class="hidden" style="margin-bottom: 1rem; font-size: 1.2rem; font-weight: bold; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px;">
-                Answer Streak 🔥 <span id="result-streak-count"></span>
-            </div>
-
-            <div style="background: rgba(0,0,0,0.3); padding: 2rem; border-radius: 24px; width: 100%; max-width: 400px;">
-                <p style="font-size: 1.2rem; color: var(--text-muted);">Points Earned</p>
-                <div id="result-points" style="font-size: 3rem; font-weight: bold; margin: 1rem 0;">+850</div>
+            <div class="result-card">
+                <h1 id="result-title" style="font-size: 3.5rem; margin-bottom: 1rem; font-weight: 900;">Correct!</h1>
                 
-                <p style="font-size: 1.2rem; color: var(--text-muted);">You are in <strong id="result-pos" style="color: white;">1st</strong> place!</p>
+                <div id="result-streak" class="hidden" style="margin-bottom: 1.5rem; font-size: 1.2rem; font-weight: bold; background: #fef08a; color: #854d0e; padding: 0.5rem 1rem; border-radius: 20px; display: inline-block;">
+                    Answer Streak 🔥 <span id="result-streak-count"></span>
+                </div>
+
+                <div style="background: #f8fafc; padding: 2rem; border-radius: 24px; border: 2px solid #e2e8f0;">
+                    <p style="font-size: 1.2rem; color: var(--text-muted); font-weight: 700;">Points Earned</p>
+                    <div id="result-points" style="font-size: 4rem; font-weight: 900; margin: 1rem 0; color: var(--primary-purple);">+850</div>
+                    
+                    <p style="font-size: 1.2rem; color: var(--text-muted); font-weight: 700;">You are in <strong id="result-pos" style="color: var(--primary-blue); font-size: 1.5rem;">1st</strong> place!</p>
+                </div>
             </div>
         </div>
 
@@ -77,18 +79,6 @@
     <style>
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-        
-        .correct-bg {
-            background-color: #66ff99 !important;
-            background-image: linear-gradient(135deg, #66ff99, #00cc66) !important;
-            color: #000;
-        }
-        
-        .incorrect-bg {
-            background-color: #ff4d4d !important;
-            background-image: linear-gradient(135deg, #ff4d4d, #cc0000) !important;
-            color: #fff;
         }
     </style>
 
