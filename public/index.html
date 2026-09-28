@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassQuiz - Join</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container center-content">
+        <div class="glass-panel join-box animate-fade-in">
+            <h1>ClassQuiz</h1>
+            <div id="join-form">
+                <input type="text" id="pin-input" placeholder="Game PIN" maxlength="6" autocomplete="off">
+                <input type="text" id="name-input" placeholder="Nickname" maxlength="15" autocomplete="off" class="hidden">
+                <button id="join-btn" class="btn btn-primary" style="width: 100%;">Enter</button>
+                <div id="error-msg" style="color: var(--danger-color); margin-top: 1rem; font-weight: bold;"></div>
+            </div>
+            
+            <div style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Are you a teacher?</p>
+                <a href="host.html" style="color: var(--accent-color); text-decoration: none; font-weight: bold; display: inline-block; margin-top: 0.5rem;">Host a Quiz</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        
+        const pinInput = document.getElementById('pin-input');
+        const nameInput = document.getElementById('name-input');
+        const joinBtn = document.getElementById('join-btn');
+        const errorMsg = document.getElementById('error-msg');
+        
+        let step = 1;
+        
+        joinBtn.addEventListener('click', () => {
+            errorMsg.textContent = '';
+            
+            if (step === 1) {
+                if (pinInput.value.trim().length === 6) {
+                    pinInput.classList.add('hidden');
+                    nameInput.classList.remove('hidden');
+                    nameInput.focus();
+                    step = 2;
+                } else {
+                    errorMsg.textContent = 'Please enter a valid 6-digit PIN';
+                }
+            } else if (step === 2) {
+                if (nameInput.value.trim().length > 0) {
+                    const pin = pinInput.value.trim();
+                    const name = nameInput.value.trim();
+                    
+                    // Attempt to join
+                    socket.emit('player-join', { pin, name });
+                    joinBtn.textContent = 'Joining...';
+                    joinBtn.disabled = true;
+                } else {
+                    errorMsg.textContent = 'Please enter a nickname';
+                }
+            }
+        });
+        
+        socket.on('join-error', (msg) => {
+            errorMsg.textContent = msg;
+            joinBtn.textContent = 'Enter';
+            joinBtn.disabled = false;
+        });
+        
+        socket.on('join-success', ({ name }) => {
+            // Save state and redirect to player view
+            sessionStorage.setItem('cq_pin', pinInput.value.trim());
+            sessionStorage.setItem('cq_name', name);
+            window.location.href = 'player.html';
+        });
+    </script>
+</body>
+</html>

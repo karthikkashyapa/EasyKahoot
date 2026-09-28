@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ClassQuiz - Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top bar for player info -->
+    <div style="background: rgba(0,0,0,0.5); padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 10;">
+        <span id="player-name-display" style="font-weight: bold;">Player</span>
+        <div style="background: rgba(255,255,255,0.2); padding: 0.2rem 0.8rem; border-radius: 12px; font-weight: bold;">
+            Score: <span id="player-score-display">0</span>
+        </div>
+    </div>
+
+    <div class="container" id="app-container" style="padding-top: 4rem; justify-content: center;">
+        
+        <!-- Waiting View -->
+        <div id="view-waiting" class="glass-panel animate-fade-in text-center" style="max-width: 400px; margin: auto; width: 100%;">
+            <h2 id="waiting-msg">You're in!</h2>
+            <p style="margin-top: 1rem; color: var(--text-muted);">See your nickname on screen</p>
+            <div class="spinner" style="margin: 2rem auto; width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--accent-color); animation: spin 1s ease-in-out infinite;"></div>
+        </div>
+
+        <!-- Question View -->
+        <div id="view-question" class="animate-fade-in hidden" style="flex: 1; display: flex; flex-direction: column; width: 100%;">
+            
+            <div class="flex-between" style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                <span id="q-number" style="font-weight: bold; color: var(--text-muted);">Q 1</span>
+                <span id="q-timer" style="font-weight: bold; color: var(--danger-color); font-size: 1.2rem;">20</span>
+            </div>
+
+            <!-- Wait, in real Kahoot, questions aren't shown on the player's screen, only shapes! 
+                 But modern UX can show the question and options on the phone to make it easier for distant students.
+                 Let's show the text, it's better for accessibility and multi-device sync! -->
+            <h2 id="q-text" class="text-center" style="margin-bottom: 1rem; font-size: 1.2rem;">Question text</h2>
+            
+            <div class="option-grid" id="q-options" style="flex: 1;">
+                <!-- Options -->
+            </div>
+        </div>
+
+        <!-- Answer Waiting View (After picking option) -->
+        <div id="view-answer-waiting" class="glass-panel animate-fade-in hidden text-center" style="max-width: 400px; margin: auto; width: 100%;">
+            <h2>Waiting for others...</h2>
+            <p style="margin-top: 1rem; color: var(--text-muted);">Did you get it right?</p>
+        </div>
+
+        <!-- Result View -->
+        <div id="view-result" class="animate-fade-in hidden" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; border-radius: 24px;">
+            <h1 id="result-title" style="font-size: 3rem; margin-bottom: 1rem;">Correct!</h1>
+            
+            <div id="result-streak" class="hidden" style="margin-bottom: 1rem; font-size: 1.2rem; font-weight: bold; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px;">
+                Answer Streak 🔥 <span id="result-streak-count"></span>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); padding: 2rem; border-radius: 24px; width: 100%; max-width: 400px;">
+                <p style="font-size: 1.2rem; color: var(--text-muted);">Points Earned</p>
+                <div id="result-points" style="font-size: 3rem; font-weight: bold; margin: 1rem 0;">+850</div>
+                
+                <p style="font-size: 1.2rem; color: var(--text-muted);">You are in <strong id="result-pos" style="color: white;">1st</strong> place!</p>
+            </div>
+        </div>
+
+        <!-- Final End View -->
+        <div id="view-end" class="glass-panel animate-fade-in hidden text-center" style="max-width: 400px; margin: auto; width: 100%;">
+            <h2>Quiz Ended!</h2>
+            <p style="margin-top: 1rem;">Check the big screen for the final podium.</p>
+            <button id="home-btn" class="btn btn-primary" style="margin-top: 2rem; width: 100%;">Play Again</button>
+        </div>
+
+    </div>
+
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .correct-bg {
+            background-color: #66ff99 !important;
+            background-image: linear-gradient(135deg, #66ff99, #00cc66) !important;
+            color: #000;
+        }
+        
+        .incorrect-bg {
+            background-color: #ff4d4d !important;
+            background-image: linear-gradient(135deg, #ff4d4d, #cc0000) !important;
+            color: #fff;
+        }
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const pin = sessionStorage.getItem('cq_pin');
+        const playerName = sessionStorage.getItem('cq_name');
+        
+        if (!pin || !playerName) {
+            window.location.href = 'index.html';
+        }
+        
+        document.getElementById('player-name-display').textContent = playerName;
+        
+        // Re-join logic
+        socket.emit('player-join', { pin, name: playerName });
+        
+        socket.on('join-error', (msg) => {
+            alert('Disconnected: ' + msg);
+            window.location.href = 'index.html';
+        });
+
+        // Views
+        const views = {
+            waiting: document.getElementById('view-waiting'),
+            question: document.getElementById('view-question'),
+            answerWaiting: document.getElementById('view-answer-waiting'),
+            result: document.getElementById('view-result'),
+            end: document.getElementById('view-end')
+        };
+
+        function showView(viewName) {
+            Object.values(views).forEach(v => {
+                if (v) v.classList.add('hidden');
+                // Remove inline styles for display to let classes manage it
+                if(v) v.style.display = '';
+            });
+            views[viewName].classList.remove('hidden');
+            if (viewName === 'question' || viewName === 'result') {
+                views[viewName].style.display = 'flex';
+            }
+        }
+
+        let timerInterval;
+
+        socket.on('question-started-player', (data) => {
+            document.body.className = ''; // reset bg
+            
+            document.getElementById('q-number').textContent = `Q ${data.questionNumber}/${data.totalQuestions}`;
+            document.getElementById('q-text').textContent = data.text;
+            document.getElementById('q-timer').textContent = data.timeLimit;
+            
+            const optionsContainer = document.getElementById('q-options');
+            optionsContainer.innerHTML = '';
+            
+            const shapes = [
+                '<svg class="shape-icon" viewBox="0 0 24 24"><path d="M21 12l-9 9-9-9 9-9z"/></svg>',
+                '<svg class="shape-icon" viewBox="0 0 24 24"><polygon points="3,21 21,21 12,3"/></svg>',
+                '<svg class="shape-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>',
+                '<svg class="shape-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg>'
+            ];
+            
+            data.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn opt-${index % 4}`;
+                // For mobile we can just show the shape big, or the text. Let's show both.
+                btn.innerHTML = `${shapes[index % 4]} <span style="flex:1; text-align:left; font-size:1.1rem; line-height: 1.2;">${opt}</span>`;
+                
+                btn.onclick = () => submitAnswer(index);
+                optionsContainer.appendChild(btn);
+            });
+            
+            showView('question');
+
+            let timeLeft = data.timeLimit;
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('q-timer').textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+        });
+
+        function submitAnswer(index) {
+            socket.emit('player-answer', { pin, answerIndex: index });
+            showView('answerWaiting');
+        }
+
+        function getOrdinal(n) {
+            const s = ["th", "st", "nd", "rd"];
+            const v = n % 100;
+            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+        }
+
+        socket.on('question-result', (data) => {
+            document.getElementById('player-score-display').textContent = data.score;
+            
+            const resultView = document.getElementById('view-result');
+            const title = document.getElementById('result-title');
+            const points = document.getElementById('result-points');
+            const pos = document.getElementById('result-pos');
+            
+            if (data.correct) {
+                resultView.className = 'animate-fade-in correct-bg';
+                title.textContent = 'Correct!';
+                points.textContent = '+' + data.pointsEarned;
+            } else {
+                resultView.className = 'animate-fade-in incorrect-bg';
+                title.textContent = 'Incorrect';
+                points.textContent = '0';
+            }
+            
+            pos.textContent = getOrdinal(data.position);
+            
+            const streakEl = document.getElementById('result-streak');
+            if (data.streak > 2) {
+                streakEl.classList.remove('hidden');
+                document.getElementById('result-streak-count').textContent = data.streak;
+            } else {
+                streakEl.classList.add('hidden');
+            }
+
+            showView('result');
+        });
+
+        socket.on('quiz-ended', () => {
+            document.body.className = '';
+            showView('end');
+        });
+
+        socket.on('host-disconnected', () => {
+            alert('Host disconnected');
+            window.location.href = 'index.html';
+        });
+
+        document.getElementById('home-btn').addEventListener('click', () => {
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+        });
+
+    </script>
+</body>
+</html>

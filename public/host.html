@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassQuiz - Host</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/icons@1.74.0/icons.js"></script>
+</head>
+<body>
+    <div class="container" id="app-container">
+        <!-- Setup View -->
+        <div id="view-setup" class="glass-panel animate-fade-in" style="max-width: 600px; margin: auto;">
+            <h1 class="text-center" style="margin-bottom: 2rem; color: var(--accent-color);">Host a Quiz</h1>
+            <p style="margin-bottom: 1rem; color: var(--text-muted);">Upload a quiz file in Aiken format (.txt or .aiken) to start.</p>
+            <input type="file" id="quiz-file" accept=".txt,.aiken">
+            
+            <div id="setup-preview" class="hidden" style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                <p>Questions loaded: <span id="q-count" style="font-weight:bold; color: var(--accent-color);">0</span></p>
+                <button id="create-btn" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Quiz Room</button>
+            </div>
+            <div id="setup-error" style="color: var(--danger-color); margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Lobby View -->
+        <div id="view-lobby" class="glass-panel animate-fade-in hidden" style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            <h2>Join at <span style="color: var(--accent-color);">localhost:3000</span> or your IP</h2>
+            <div class="pin-display" id="lobby-pin">------</div>
+            <div class="flex-between" style="max-width: 400px; margin: 0 auto; width: 100%;">
+                <p><span id="player-count">0</span> Players</p>
+                <button id="start-btn" class="btn btn-success" disabled>Start Quiz</button>
+            </div>
+            <div class="lobby-players" id="lobby-players">
+                <!-- Players will appear here -->
+            </div>
+        </div>
+
+        <!-- Question View -->
+        <div id="view-question" class="glass-panel animate-fade-in hidden" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="flex-between">
+                <span id="q-number" style="font-size: 1.5rem; font-weight: bold; color: var(--text-muted);">Q 1/10</span>
+                <span id="q-timer" style="font-size: 2rem; font-weight: bold; color: var(--danger-color);">20</span>
+            </div>
+            <div class="progress-container" style="margin-top: 1rem;">
+                <div class="progress-bar" id="q-progress"></div>
+            </div>
+            
+            <h1 id="q-text" class="text-center" style="font-size: 2.5rem; margin: 2rem 0; flex: 1; display: flex; align-items: center; justify-content: center;">Question text?</h1>
+            
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <span id="q-answers-count" style="font-size: 1.5rem; font-weight: bold;">0</span> Answers
+            </div>
+
+            <div class="option-grid" id="q-options">
+                <!-- Options -->
+            </div>
+            
+            <button id="skip-btn" class="btn" style="background: rgba(255,255,255,0.1); margin-top: 1rem; align-self: flex-end;">Skip Timer</button>
+        </div>
+
+        <!-- Leaderboard View -->
+        <div id="view-leaderboard" class="glass-panel animate-fade-in hidden" style="flex: 1; max-width: 800px; margin: 0 auto; width: 100%;">
+            <div class="flex-between">
+                <h1 style="color: var(--accent-color);">Leaderboard</h1>
+                <button id="next-btn" class="btn btn-primary">Next</button>
+            </div>
+            
+            <div id="correct-answer-display" style="margin: 2rem 0; padding: 1rem; background: rgba(0,255,0,0.1); border-radius: 8px; border: 1px solid var(--accent-color);">
+                Correct Answer: <span id="correct-answer-text" style="font-weight: bold;"></span>
+            </div>
+
+            <ul class="leaderboard-list" id="leaderboard-list">
+                <!-- Leaderboard items -->
+            </ul>
+        </div>
+
+        <!-- End View -->
+        <div id="view-end" class="glass-panel animate-fade-in hidden" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+            <h1 style="font-size: 4rem; margin-bottom: 2rem; background: -webkit-linear-gradient(45deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Podium</h1>
+            
+            <div id="podium-container" style="display: flex; justify-content: center; align-items: flex-end; height: 300px; gap: 1rem; margin-bottom: 2rem;">
+                <!-- Podium bars will be injected here -->
+            </div>
+            
+            <button id="home-btn" class="btn btn-primary">Back to Home</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let parsedQuestions = [];
+        let currentPin = '';
+        let timerInterval;
+
+        // Views
+        const views = {
+            setup: document.getElementById('view-setup'),
+            lobby: document.getElementById('view-lobby'),
+            question: document.getElementById('view-question'),
+            leaderboard: document.getElementById('view-leaderboard'),
+            end: document.getElementById('view-end')
+        };
+
+        function showView(viewName) {
+            Object.values(views).forEach(v => {
+                if (v) v.classList.add('hidden');
+                // Remove inline display style if it was set
+                if(v) v.style.display = '';
+            });
+            views[viewName].classList.remove('hidden');
+            // If it's flex container, we need to ensure it displays as flex
+            if (viewName !== 'setup') {
+                views[viewName].style.display = 'flex';
+            }
+        }
+
+        // Aiken Parser
+        document.getElementById('quiz-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseAiken(text);
+            };
+            reader.readAsText(file);
+        });
+
+        function parseAiken(text) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const questions = [];
+            let currentQ = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (line.startsWith('ANSWER:')) {
+                    if (currentQ && currentQ.options.length > 0) {
+                        const ansChar = line.replace('ANSWER:', '').trim();
+                        // Convert A,B,C,D to 0,1,2,3
+                        currentQ.correctAnswerIndex = ansChar.charCodeAt(0) - 65; 
+                        currentQ.timeLimit = 20; // Default time limit
+                        questions.push(currentQ);
+                        currentQ = null;
+                    }
+                } else if (/^[A-Z][\)\.]/.test(line)) {
+                    // Option line like "A) Paris" or "A. Paris"
+                    if (currentQ) {
+                        currentQ.options.push(line.substring(2).trim());
+                    }
+                } else {
+                    // Question text
+                    if (!currentQ) {
+                        currentQ = { text: line, options: [] };
+                    } else {
+                        // Might be multi-line question, just append
+                        currentQ.text += ' ' + line;
+                    }
+                }
+            }
+
+            if (questions.length > 0) {
+                parsedQuestions = questions;
+                document.getElementById('q-count').textContent = questions.length;
+                document.getElementById('setup-preview').classList.remove('hidden');
+                document.getElementById('setup-error').textContent = '';
+            } else {
+                document.getElementById('setup-error').textContent = 'Could not parse any questions. Make sure file is in Aiken format.';
+                document.getElementById('setup-preview').classList.add('hidden');
+            }
+        }
+
+        // Host Actions
+        document.getElementById('create-btn').addEventListener('click', () => {
+            socket.emit('host-create-quiz', { questions: parsedQuestions });
+        });
+
+        socket.on('quiz-created', ({ pin }) => {
+            currentPin = pin;
+            document.getElementById('lobby-pin').textContent = pin;
+            showView('lobby');
+        });
+
+        socket.on('lobby-update', (players) => {
+            document.getElementById('player-count').textContent = players.length;
+            const container = document.getElementById('lobby-players');
+            container.innerHTML = '';
+            players.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'player-chip';
+                div.textContent = p;
+                container.appendChild(div);
+            });
+            document.getElementById('start-btn').disabled = players.length === 0;
+        });
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            socket.emit('host-start-quiz', currentPin);
+        });
+
+        let currentQuestionData = null;
+
+        socket.on('question-started', (data) => {
+            currentQuestionData = data.question;
+            document.getElementById('q-number').textContent = `Q ${data.questionNumber}/${data.totalQuestions}`;
+            document.getElementById('q-text').textContent = data.question.text;
+            document.getElementById('q-timer').textContent = data.question.timeLimit;
+            document.getElementById('q-answers-count').textContent = '0';
+            
+            const optionsContainer = document.getElementById('q-options');
+            optionsContainer.innerHTML = '';
+            
+            const shapes = [
+                '<svg class="shape-icon" viewBox="0 0 24 24"><path d="M21 12l-9 9-9-9 9-9z"/></svg>',
+                '<svg class="shape-icon" viewBox="0 0 24 24"><polygon points="3,21 21,21 12,3"/></svg>',
+                '<svg class="shape-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>',
+                '<svg class="shape-icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16"/></svg>'
+            ];
+            
+            data.question.options.forEach((opt, index) => {
+                const btn = document.createElement('div');
+                btn.className = `option-btn opt-${index % 4}`;
+                btn.innerHTML = `${shapes[index % 4]} <span style="flex:1; text-align:left;">${opt}</span>`;
+                optionsContainer.appendChild(btn);
+            });
+            
+            showView('question');
+
+            // Timer logic
+            let timeLeft = data.question.timeLimit;
+            const progressBar = document.getElementById('q-progress');
+            progressBar.style.width = '100%';
+            
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('q-timer').textContent = timeLeft;
+                progressBar.style.width = `${(timeLeft / data.question.timeLimit) * 100}%`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+        });
+
+        socket.on('player-answered', (data) => {
+            document.getElementById('q-answers-count').textContent = data.answeredCount;
+        });
+
+        document.getElementById('skip-btn').addEventListener('click', () => {
+             // In a real app we'd tell the server to end it early.
+             // For now we can just rely on timer or all answered. 
+             // To simplify, we'll just wait or answer from a dummy client.
+        });
+
+        socket.on('question-ended', (data) => {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            const correctOpt = currentQuestionData.options[data.correctAnswerIndex];
+            document.getElementById('correct-answer-text').textContent = correctOpt;
+
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
+            
+            data.leaderboard.forEach(p => {
+                const li = document.createElement('li');
+                li.className = 'leaderboard-item';
+                li.innerHTML = `
+                    <span>${p.name} ${p.streak > 2 ? '🔥' : ''}</span>
+                    <span>${p.score}</span>
+                `;
+                list.appendChild(li);
+            });
+
+            showView('leaderboard');
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            socket.emit('host-next-question', currentPin);
+        });
+
+        socket.on('quiz-ended', (data) => {
+            const container = document.getElementById('podium-container');
+            container.innerHTML = '';
+            
+            const winners = data.winners;
+            
+            // Reorder for display: 2nd, 1st, 3rd
+            const displayOrder = [];
+            if (winners[1]) displayOrder.push({ ...winners[1], pos: 2, height: '60%', color: '#c0c0c0' });
+            if (winners[0]) displayOrder.push({ ...winners[0], pos: 1, height: '100%', color: '#d4af37' });
+            if (winners[2]) displayOrder.push({ ...winners[2], pos: 3, height: '40%', color: '#cd7f32' });
+
+            displayOrder.forEach(w => {
+                const bar = document.createElement('div');
+                bar.style.width = '100px';
+                bar.style.height = w.height;
+                bar.style.background = `linear-gradient(to top, ${w.color}, rgba(0,0,0,0.5))`;
+                bar.style.borderRadius = '12px 12px 0 0';
+                bar.style.display = 'flex';
+                bar.style.flexDirection = 'column';
+                bar.style.alignItems = 'center';
+                bar.style.justifyContent = 'flex-start';
+                bar.style.paddingTop = '1rem';
+                bar.style.border = `2px solid ${w.color}`;
+                bar.style.borderBottom = 'none';
+                bar.style.boxShadow = `0 0 20px ${w.color}55`;
+                
+                bar.innerHTML = `
+                    <div style="font-size: 2rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${w.pos}</div>
+                    <div style="margin-top: -10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; width: 90%; text-align: center;">${w.name}</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">${w.score}</div>
+                `;
+                container.appendChild(bar);
+            });
+            
+            showView('end');
+        });
+
+        document.getElementById('home-btn').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+    </script>
+</body>
+</html>
