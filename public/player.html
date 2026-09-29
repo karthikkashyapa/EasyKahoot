@@ -34,10 +34,9 @@
                 <span id="q-timer" style="font-size: 2rem; font-weight: 900; color: var(--opt-red); background: #fee2e2; padding: 0.2rem 1rem; border-radius: 50px;">20</span>
             </div>
 
-            <!-- Wait, in real Kahoot, questions aren't shown on the player's screen, only shapes! 
-                 But modern UX can show the question and options on the phone to make it easier for distant students.
-                 Let's show the text, it's better for accessibility and multi-device sync! -->
-            <h2 id="q-text" class="text-center" style="margin-bottom: 1rem; font-size: 1.2rem;">Question text</h2>
+            <div class="glass-panel" style="padding: 1.5rem; margin-bottom: 1rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h2 id="q-text" style="font-size: 1.2rem; line-height: 1.5; margin: 0; color: var(--text-main);">Question text</h2>
+            </div>
             
             <div class="option-grid" id="q-options" style="flex: 1;">
                 <!-- Options -->
@@ -129,10 +128,11 @@
         let timerInterval;
 
         socket.on('question-started-player', (data) => {
+            document.body.className = '';
             if (data.mode === 'kbc') {
                 document.body.classList.add('kbc-theme');
-            } else {
-                document.body.classList.remove('kbc-theme');
+            } else if (data.mode === 'boss') {
+                document.body.classList.add('boss-theme');
             }
             
             document.getElementById('q-number').textContent = `Q ${data.questionNumber}/${data.totalQuestions}`;

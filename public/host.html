@@ -12,9 +12,9 @@
     <div class="container" id="app-container">
         <!-- Teacher Dashboard View -->
         <div id="view-setup" class="animate-fade-in" style="width: 100%; max-width: 1200px; margin: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
-                <h1 class="title-text" style="color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.3); margin:0;">Teacher Dashboard</h1>
-                <div style="background: rgba(255,255,255,0.2); padding: 0.5rem 1.5rem; border-radius: 50px; color: white; font-weight: bold; backdrop-filter: blur(10px);">🟢 Active Session</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; background: rgba(0,0,0,0.6); padding: 1.5rem 2.5rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                <h1 class="title-text" style="color: white; margin:0; font-size: 2.8rem; text-shadow: none;">Teacher Dashboard</h1>
+                <div style="background: rgba(255,255,255,0.15); padding: 0.8rem 2rem; border-radius: 50px; color: white; font-weight: bold; font-size: 1.2rem; border: 1px solid rgba(255,255,255,0.3);">🟢 Active Session</div>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
@@ -107,6 +107,29 @@
             </ul>
         </div>
 
+        <!-- Boss Battle Results -->
+        <div id="view-boss-result" class="glass-panel animate-fade-in hidden" style="flex: 1; display: flex; flex-direction: column; align-items: center; max-width: 900px; margin: 0 auto; width: 100%;">
+            <h1 class="title-text" style="color: #fca5a5; font-size: 4rem;">Boss Battle</h1>
+            
+            <div style="width: 100%; margin: 2rem 0; text-align: left;">
+                <h3 style="color: white; margin-bottom: 0.5rem; font-size: 1.5rem;">👾 Space Monster (HP: <span id="boss-hp-text">100</span>%)</h3>
+                <div class="progress-container" style="height: 30px; background: #450a0a; border: 2px solid #7f1d1d;">
+                    <div id="boss-hp-bar" class="progress-bar" style="background: #ef4444; width: 100%; transition: width 1s ease-in-out;"></div>
+                </div>
+            </div>
+
+            <div style="width: 100%; margin: 1rem 0; text-align: left;">
+                <h3 style="color: white; margin-bottom: 0.5rem; font-size: 1.5rem;">🛡️ The Class (HP: <span id="class-hp-text">100</span>%)</h3>
+                <div class="progress-container" style="height: 30px; background: #064e3b; border: 2px solid #047857;">
+                    <div id="class-hp-bar" class="progress-bar" style="background: #10b981; width: 100%; transition: width 1s ease-in-out;"></div>
+                </div>
+            </div>
+            
+            <div id="boss-damage-report" style="font-size: 2rem; color: white; margin: 2rem 0; font-weight: bold; text-align: center; min-height: 4rem;"></div>
+
+            <button id="boss-next-btn" class="btn btn-primary" style="font-size: 1.5rem; padding: 1rem 3rem;">Next Question</button>
+        </div>
+
         <!-- End View -->
         <div id="view-end" class="glass-panel animate-fade-in hidden" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
             <img src="mascot.jpg" alt="Mascot" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid #f59e0b; box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); object-fit: cover; margin-bottom: 1rem; animation: popIn 0.5s ease 0.2s both;">
@@ -143,6 +166,9 @@
             if (mode === 'kbc') {
                 title.textContent = 'Upload Questions for KBC Mode';
                 title.style.color = '#fbbf24';
+            } else if (mode === 'boss') {
+                title.textContent = 'Upload Questions for Boss Battle';
+                title.style.color = '#ef4444';
             } else {
                 title.textContent = 'Upload Questions for Classic Mode';
                 title.style.color = 'var(--primary-purple)';
@@ -155,6 +181,7 @@
             lobby: document.getElementById('view-lobby'),
             question: document.getElementById('view-question'),
             leaderboard: document.getElementById('view-leaderboard'),
+            'boss-result': document.getElementById('view-boss-result'),
             end: document.getElementById('view-end')
         };
 
@@ -298,10 +325,11 @@
             currentPin = pin;
             currentMode = mode;
             
+            document.body.className = '';
             if (mode === 'kbc') {
                 document.body.classList.add('kbc-theme');
-            } else {
-                document.body.classList.remove('kbc-theme');
+            } else if (mode === 'boss') {
+                document.body.classList.add('boss-theme');
             }
 
             document.getElementById('lobby-pin').textContent = pin;
@@ -420,10 +448,29 @@
                 list.appendChild(li);
             });
 
-            showView('leaderboard');
+            if (data.mode === 'boss') {
+                document.getElementById('boss-hp-text').textContent = data.bossHealth;
+                document.getElementById('boss-hp-bar').style.width = data.bossHealth + '%';
+                document.getElementById('class-hp-text').textContent = data.classHealth;
+                document.getElementById('class-hp-bar').style.width = data.classHealth + '%';
+                
+                const report = document.getElementById('boss-damage-report');
+                if (data.bossDamage > 0) {
+                    report.innerHTML = `<span style="color: #10b981;">Class deals ${data.bossDamage} damage to the Boss!</span>`;
+                } else {
+                    report.innerHTML = `<span style="color: #ef4444;">Boss attacks the Class for ${data.classDamage} damage!</span>`;
+                }
+                showView('boss-result');
+            } else {
+                showView('leaderboard');
+            }
         });
 
         document.getElementById('next-btn').addEventListener('click', () => {
+            socket.emit('host-next-question', currentPin);
+        });
+
+        document.getElementById('boss-next-btn').addEventListener('click', () => {
             socket.emit('host-next-question', currentPin);
         });
 
@@ -440,28 +487,59 @@
             if (winners[0]) displayOrder.push({ ...winners[0], pos: 1, height: '100%', color: '#d4af37' });
             if (winners[2]) displayOrder.push({ ...winners[2], pos: 3, height: '40%', color: '#cd7f32' });
 
-            displayOrder.forEach(w => {
-                const bar = document.createElement('div');
-                bar.style.width = '100px';
-                bar.style.height = w.height;
-                bar.style.background = `linear-gradient(to top, ${w.color}, rgba(0,0,0,0.5))`;
-                bar.style.borderRadius = '12px 12px 0 0';
-                bar.style.display = 'flex';
-                bar.style.flexDirection = 'column';
-                bar.style.alignItems = 'center';
-                bar.style.justifyContent = 'flex-start';
-                bar.style.paddingTop = '1rem';
-                bar.style.border = `2px solid ${w.color}`;
-                bar.style.borderBottom = 'none';
-                bar.style.boxShadow = `0 0 20px ${w.color}55`;
+            if (data.mode === 'boss') {
+                container.style.flexDirection = 'column';
+                container.style.alignItems = 'center';
+                container.style.justifyContent = 'center';
                 
-                bar.innerHTML = `
-                    <div style="font-size: 2rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${w.pos}</div>
-                    <div style="margin-top: -10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; width: 90%; text-align: center;">${w.name}</div>
-                    <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">${w.score}</div>
-                `;
-                container.appendChild(bar);
-            });
+                if (data.bossHealth <= 0) {
+                    container.innerHTML = `
+                        <h1 style="font-size: 5rem; color: #10b981; margin-bottom: 1rem;">Victory!</h1>
+                        <p style="font-size: 2rem; color: white;">The Class defeated the Space Monster!</p>
+                        <div style="font-size: 8rem; margin: 2rem 0;">🎉</div>
+                    `;
+                } else if (data.classHealth <= 0) {
+                    container.innerHTML = `
+                        <h1 style="font-size: 5rem; color: #ef4444; margin-bottom: 1rem;">Defeat!</h1>
+                        <p style="font-size: 2rem; color: white;">The Space Monster overwhelmed the Class!</p>
+                        <div style="font-size: 8rem; margin: 2rem 0;">💀</div>
+                    `;
+                } else {
+                    const winner = data.classHealth >= data.bossHealth ? 'The Class Wins' : 'The Boss Wins';
+                    const color = data.classHealth >= data.bossHealth ? '#10b981' : '#ef4444';
+                    container.innerHTML = `
+                        <h1 style="font-size: 5rem; color: ${color}; margin-bottom: 1rem;">Time's Up!</h1>
+                        <p style="font-size: 2rem; color: white;">${winner} based on remaining Health!</p>
+                    `;
+                }
+            } else {
+                container.style.flexDirection = 'row';
+                container.style.alignItems = 'flex-end';
+                container.style.justifyContent = 'center';
+                
+                displayOrder.forEach(w => {
+                    const bar = document.createElement('div');
+                    bar.style.width = '100px';
+                    bar.style.height = w.height;
+                    bar.style.background = `linear-gradient(to top, ${w.color}, rgba(0,0,0,0.5))`;
+                    bar.style.borderRadius = '12px 12px 0 0';
+                    bar.style.display = 'flex';
+                    bar.style.flexDirection = 'column';
+                    bar.style.alignItems = 'center';
+                    bar.style.justifyContent = 'flex-start';
+                    bar.style.paddingTop = '1rem';
+                    bar.style.border = `2px solid ${w.color}`;
+                    bar.style.borderBottom = 'none';
+                    bar.style.boxShadow = `0 0 20px ${w.color}55`;
+                    
+                    bar.innerHTML = `
+                        <div style="font-size: 2rem; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${w.pos}</div>
+                        <div style="margin-top: -10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; width: 90%; text-align: center;">${w.name}</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">${w.score}</div>
+                    `;
+                    container.appendChild(bar);
+                });
+            }
             
             showView('end');
         });

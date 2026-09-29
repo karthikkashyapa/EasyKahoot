@@ -45,7 +45,9 @@ io.on('connection', (socket) => {
             currentQuestionIndex: -1,
             players: new Map(), // socketId -> { name, score, lastAnswerCorrect, streak }
             questionStartTime: null,
-            timer: null
+            timer: null,
+            bossHealth: 100, // For Boss Mode
+            classHealth: 100 // For Boss Mode
         });
 
         socket.join(pin);
@@ -324,18 +326,31 @@ io.on('connection', (socket) => {
 
         const topPlayers = playersList.slice(0, 10); // Top 10
 
-        // Calculate stats for host
-        const stats = {
-            0: 0, 1: 0, 2: 0, 3: 0
-        };
-        // We actually don't store which answer they picked in this simple version, 
-        // we'd need to store it in player-answer to show exactly how many picked A,B,C,D.
-        // Let's omit full stats and just show who was correct for now, or we can just send the leaderboard.
+        let bossDamage = 0;
+        let classDamage = 0;
+
+        if (quiz.mode === 'boss') {
+            const correctCount = Array.from(quiz.players.values()).filter(p => p.hasAnsweredCurrent && p.lastAnswerCorrect).length;
+            const totalAnswered = Array.from(quiz.players.values()).filter(p => p.hasAnsweredCurrent).length;
+            const ratio = totalAnswered > 0 ? correctCount / totalAnswered : 0;
+            
+            if (ratio >= 0.5) {
+                bossDamage = Math.round(ratio * 30); // Up to 30 damage to boss
+                quiz.bossHealth = Math.max(0, quiz.bossHealth - bossDamage);
+            } else {
+                classDamage = Math.round((1 - ratio) * 25); // Up to 25 damage to class
+                quiz.classHealth = Math.max(0, quiz.classHealth - classDamage);
+            }
+        }
 
         io.to(quiz.hostId).emit('question-ended', {
             correctAnswerIndex: currentQuestion.correctAnswerIndex,
             leaderboard: topPlayers,
-            mode: quiz.mode
+            mode: quiz.mode,
+            bossHealth: quiz.bossHealth,
+            classHealth: quiz.classHealth,
+            bossDamage: bossDamage,
+            classDamage: classDamage
         });
 
         // Send individual results to each player
@@ -375,7 +390,10 @@ io.on('connection', (socket) => {
 
         io.to(pin).emit('quiz-ended', {
             winners: top3,
-            fullReport: fullReport
+            fullReport: fullReport,
+            mode: quiz.mode,
+            bossHealth: quiz.bossHealth,
+            classHealth: quiz.classHealth
         });
         
         // Don't delete the quiz immediately so the host can extract reports or replay

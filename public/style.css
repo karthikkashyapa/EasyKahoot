@@ -405,3 +405,33 @@ body.kbc-theme .leaderboard-item div {
     background: #0f172a !important;
     color: #fbbf24 !important;
 }
+
+/* Boss Mode Theme Overrides */
+body.boss-theme {
+    --text-main: #fca5a5;
+    --text-muted: #f87171;
+    --primary-purple: #ef4444;
+    background: linear-gradient(-45deg, #450a0a, #7f1d1d, #000000) !important;
+    animation: none !important;
+    color: var(--text-main);
+}
+body.boss-theme .glass-panel {
+    background: rgba(69, 10, 10, 0.85);
+    border: 1px solid #ef4444;
+    box-shadow: 0 10px 40px rgba(239, 68, 68, 0.15);
+}
+body.boss-theme .title-text, body.boss-theme h1, body.boss-theme h2 {
+    color: #ef4444 !important;
+}
+body.boss-theme .option-btn {
+    background: #7f1d1d;
+    border: 2px solid #ef4444;
+    box-shadow: 0 8px 0 #450a0a;
+}
+body.boss-theme .option-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+body.boss-theme .progress-bar {
+    background: #ef4444;
+}
