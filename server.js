@@ -38,6 +38,7 @@ io.on('connection', (socket) => {
         const pin = generatePin();
         quizzes.set(pin, {
             pin,
+            mode: quizData.mode || 'classic',
             hostId: socket.id,
             questions: quizData.questions,
             state: 'lobby', // lobby, question, leaderboard, end
@@ -48,7 +49,7 @@ io.on('connection', (socket) => {
         });
 
         socket.join(pin);
-        socket.emit('quiz-created', { pin });
+        socket.emit('quiz-created', { pin, mode: quizData.mode || 'classic' });
     });
 
     socket.on('host-start-quiz', (pin) => {
@@ -148,7 +149,8 @@ io.on('connection', (socket) => {
                 score: 0,
                 lastAnswerCorrect: false,
                 streak: 0,
-                hasAnsweredCurrent: false
+                hasAnsweredCurrent: false,
+                history: []
             });
         }
 
@@ -172,22 +174,35 @@ io.on('connection', (socket) => {
         const currentQuestion = quiz.questions[quiz.currentQuestionIndex];
         const isCorrect = (answerIndex === currentQuestion.correctAnswerIndex);
         
+        let pointsEarned = 0;
         if (isCorrect) {
-            const timeLimit = currentQuestion.timeLimit * 1000;
-            const timeTaken = Date.now() - quiz.questionStartTime;
+            if (quiz.mode === 'kbc') {
+                const kbcRewards = [1000, 2000, 3000, 5000, 10000, 20000, 40000, 80000, 160000, 320000, 640000, 1250000, 2500000, 5000000, 10000000];
+                pointsEarned = kbcRewards[quiz.currentQuestionIndex] || ((quiz.currentQuestionIndex + 1) * 10000);
+            } else {
+                const timeLimit = currentQuestion.timeLimit * 1000;
+                const timeTaken = Date.now() - quiz.questionStartTime;
+                const timeRatio = Math.min(timeTaken / timeLimit, 1);
+                pointsEarned = Math.round((1 - (timeRatio / 2)) * 1000);
+            }
             
-            // Score calculation: 1000 points max. Min 500 points for correct answer.
-            // Formula: Math.round( (1 - (timeTaken / timeLimit) / 2) * maxPoints )
-            const timeRatio = Math.min(timeTaken / timeLimit, 1);
-            const points = Math.round((1 - (timeRatio / 2)) * 1000);
-            
-            player.score += points;
+            player.score += pointsEarned;
             player.lastAnswerCorrect = true;
             player.streak += 1;
         } else {
             player.lastAnswerCorrect = false;
             player.streak = 0;
         }
+
+        // Record history for final report
+        const timeElapsed = (Date.now() - quiz.questionStartTime) / 1000;
+        player.history.push({
+            questionNumber: quiz.currentQuestionIndex + 1,
+            questionText: currentQuestion.text,
+            correct: isCorrect,
+            timeElapsed: timeElapsed.toFixed(2),
+            points: pointsEarned
+        });
 
         // Notify host that a player answered
         io.to(quiz.hostId).emit('player-answered', { 
@@ -271,7 +286,8 @@ io.on('connection', (socket) => {
         io.to(quiz.hostId).emit('question-started', {
             question: currentQuestion,
             questionNumber: quiz.currentQuestionIndex + 1,
-            totalQuestions: quiz.questions.length
+            totalQuestions: quiz.questions.length,
+            mode: quiz.mode
         });
 
         // Send to players (without answer)
@@ -280,7 +296,8 @@ io.on('connection', (socket) => {
             options: currentQuestion.options,
             timeLimit: currentQuestion.timeLimit,
             questionNumber: quiz.currentQuestionIndex + 1,
-            totalQuestions: quiz.questions.length
+            totalQuestions: quiz.questions.length,
+            mode: quiz.mode
         };
         socket.to(pin).emit('question-started-player', playerQuestion);
 
@@ -317,7 +334,8 @@ io.on('connection', (socket) => {
 
         io.to(quiz.hostId).emit('question-ended', {
             correctAnswerIndex: currentQuestion.correctAnswerIndex,
-            leaderboard: topPlayers
+            leaderboard: topPlayers,
+            mode: quiz.mode
         });
 
         // Send individual results to each player
@@ -328,7 +346,8 @@ io.on('connection', (socket) => {
                 score: player.score,
                 pointsEarned: player.hasAnsweredCurrent && player.lastAnswerCorrect ? (player.score - (player.previousScore || 0)) : 0,
                 position: position,
-                streak: player.streak
+                streak: player.streak,
+                mode: quiz.mode
             });
             player.previousScore = player.score; // store for next time
         });
@@ -339,6 +358,15 @@ io.on('connection', (socket) => {
         if (!quiz) return;
 
         quiz.state = 'end';
+        
+        // Compile full report data for CSV export
+        const fullReport = Array.from(quiz.players.values()).map(p => ({
+            name: p.name,
+            score: p.score,
+            streak: p.streak,
+            history: p.history || []
+        }));
+
         const playersList = Array.from(quiz.players.values())
             .map(p => ({ name: p.name, score: p.score }))
             .sort((a, b) => b.score - a.score);
@@ -346,11 +374,30 @@ io.on('connection', (socket) => {
         const top3 = playersList.slice(0, 3);
 
         io.to(pin).emit('quiz-ended', {
-            winners: top3
+            winners: top3,
+            fullReport: fullReport
         });
         
-        quizzes.delete(pin);
+        // Don't delete the quiz immediately so the host can extract reports or replay
+        // quizzes.delete(pin); // Commented out to allow reconduct
     }
+
+    socket.on('host-replay-quiz', (pin) => {
+        const quiz = quizzes.get(pin);
+        if (quiz && quiz.hostId === socket.id) {
+            // Reset state
+            quiz.state = 'lobby';
+            quiz.currentQuestionIndex = -1;
+            quiz.questionStartTime = null;
+            if (quiz.timer) clearTimeout(quiz.timer);
+            
+            // Clear all players (force them to rejoin)
+            quiz.players.clear();
+
+            // Go back to lobby for host
+            socket.emit('quiz-created', { pin: pin });
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3000;

@@ -129,7 +129,11 @@
         let timerInterval;
 
         socket.on('question-started-player', (data) => {
-            document.body.className = ''; // reset bg
+            if (data.mode === 'kbc') {
+                document.body.classList.add('kbc-theme');
+            } else {
+                document.body.classList.remove('kbc-theme');
+            }
             
             document.getElementById('q-number').textContent = `Q ${data.questionNumber}/${data.totalQuestions}`;
             document.getElementById('q-text').textContent = data.text;
@@ -180,7 +184,11 @@
         }
 
         socket.on('question-result', (data) => {
-            document.getElementById('player-score-display').textContent = data.score;
+            if (data.mode === 'kbc') {
+                document.getElementById('player-score-display').textContent = '₹ ' + data.score.toLocaleString();
+            } else {
+                document.getElementById('player-score-display').textContent = data.score;
+            }
             
             const resultView = document.getElementById('view-result');
             const title = document.getElementById('result-title');
@@ -190,11 +198,11 @@
             if (data.correct) {
                 resultView.className = 'animate-fade-in correct-bg';
                 title.textContent = 'Correct!';
-                points.textContent = '+' + data.pointsEarned;
+                points.textContent = data.mode === 'kbc' ? '+₹ ' + data.pointsEarned.toLocaleString() : '+' + data.pointsEarned;
             } else {
                 resultView.className = 'animate-fade-in incorrect-bg';
                 title.textContent = 'Incorrect';
-                points.textContent = '0';
+                points.textContent = data.mode === 'kbc' ? '+₹ 0' : '0';
             }
             
             pos.textContent = getOrdinal(data.position);

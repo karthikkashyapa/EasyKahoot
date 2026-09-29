@@ -10,17 +10,42 @@
 </head>
 <body>
     <div class="container" id="app-container">
-        <!-- Setup View -->
-        <div id="view-setup" class="glass-panel animate-fade-in" style="max-width: 600px; margin: auto;">
-            <h1 class="text-center title-text" style="margin-bottom: 2rem; color: var(--primary-purple);">Host a Quiz</h1>
-            <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 1.2rem; font-weight: bold; text-align: center;">Upload a quiz file in Aiken format (.txt or .aiken) to start.</p>
-            <input type="file" id="quiz-file" accept=".txt,.aiken">
-            
-            <div id="setup-preview" class="hidden" style="margin-top: 1rem; padding: 1.5rem; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; text-align: center;">
-                <p style="font-size: 1.2rem;">Questions loaded: <span id="q-count" style="font-weight:900; color: var(--btn-primary); font-size: 1.5rem;">0</span></p>
-                <button id="create-btn" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; font-size: 1.5rem; padding: 1.2rem;">Create Quiz Room</button>
+        <!-- Teacher Dashboard View -->
+        <div id="view-setup" class="animate-fade-in" style="width: 100%; max-width: 1200px; margin: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+                <h1 class="title-text" style="color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.3); margin:0;">Teacher Dashboard</h1>
+                <div style="background: rgba(255,255,255,0.2); padding: 0.5rem 1.5rem; border-radius: 50px; color: white; font-weight: bold; backdrop-filter: blur(10px);">🟢 Active Session</div>
             </div>
-            <div id="setup-error" style="color: var(--opt-red); margin-top: 1rem; text-align: center; font-weight: bold;"></div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+                <!-- Classic Mode Card -->
+                <div class="glass-panel" style="text-align: center; cursor: pointer; transition: transform 0.3s;" onclick="selectMode('classic')">
+                    <div style="font-size: 5rem; margin-bottom: 1rem;">🚀</div>
+                    <h2 style="color: var(--primary-purple); font-size: 2.5rem; margin-bottom: 1rem;">Classic Quiz</h2>
+                    <p style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 2rem;">Fast-paced Kahoot-style quiz. Points based on speed!</p>
+                    <button class="btn btn-primary" style="width: 100%;">Select Classic</button>
+                </div>
+
+                <!-- KBC Mode Card -->
+                <div class="glass-panel" style="text-align: center; cursor: pointer; transition: transform 0.3s; background: linear-gradient(135deg, #1e3a8a, #312e81); border: 2px solid #fbbf24;" onclick="selectMode('kbc')">
+                    <div style="font-size: 5rem; margin-bottom: 1rem;">💰</div>
+                    <h2 style="color: #fbbf24; font-size: 2.5rem; margin-bottom: 1rem;">KBC Mode</h2>
+                    <p style="color: #e2e8f0; font-size: 1.2rem; margin-bottom: 2rem;">Kaun Banega Crorepati! Exponential points, no time penalty.</p>
+                    <button class="btn" style="width: 100%; background: #fbbf24; color: #1e3a8a; font-weight: 900; box-shadow: 0 6px 0 #b45309;">Select KBC</button>
+                </div>
+            </div>
+
+            <!-- Upload Modal (hidden by default) -->
+            <div id="upload-modal" class="glass-panel hidden" style="max-width: 600px; margin: 3rem auto; text-align: center;">
+                <h2 id="upload-title" style="color: var(--primary-purple); margin-bottom: 1rem;">Upload Questions</h2>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 1.2rem; font-weight: bold;">Upload Aiken (.txt) or Moodle XML (.xml).</p>
+                <input type="file" id="quiz-file" accept=".txt,.aiken,.xml">
+                <div id="setup-preview" class="hidden" style="margin-top: 1rem; padding: 1.5rem; background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px;">
+                    <p style="font-size: 1.2rem;">Questions loaded: <span id="q-count" style="font-weight:900; color: var(--btn-primary); font-size: 1.5rem;">0</span></p>
+                    <button id="create-btn" class="btn btn-success" style="width: 100%; margin-top: 1.5rem; font-size: 1.5rem; padding: 1.2rem;">Create Quiz Room</button>
+                </div>
+                <div id="setup-error" style="color: var(--opt-red); margin-top: 1rem; text-align: center; font-weight: bold;"></div>
+            </div>
         </div>
 
         <!-- Lobby View -->
@@ -91,7 +116,11 @@
                 <!-- Podium bars will be injected here -->
             </div>
             
-            <button id="home-btn" class="btn btn-primary" style="font-size: 1.5rem; margin: 0 auto;">Back to Home</button>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button id="export-csv-btn" class="btn btn-success" style="font-size: 1.2rem; padding: 1rem 2rem; box-shadow: 0 8px 0 var(--btn-success-dark);">Export CSV Report</button>
+                <button id="replay-btn" class="btn btn-primary" style="font-size: 1.2rem; padding: 1rem 2rem; box-shadow: 0 8px 0 var(--btn-primary-dark);">Reconduct Quiz</button>
+                <button id="home-btn" class="btn btn-danger" style="font-size: 1.2rem; padding: 1rem 2rem; box-shadow: 0 8px 0 #991b1b; background: #dc2626;">End Session</button>
+            </div>
         </div>
     </div>
 
@@ -101,6 +130,24 @@
         let parsedQuestions = [];
         let currentPin = '';
         let timerInterval;
+        let fullReportData = null;
+        let selectedMode = 'classic';
+        let currentMode = 'classic';
+
+        function selectMode(mode) {
+            selectedMode = mode;
+            document.getElementById('upload-modal').classList.remove('hidden');
+            document.getElementById('upload-modal').scrollIntoView({ behavior: 'smooth' });
+            
+            const title = document.getElementById('upload-title');
+            if (mode === 'kbc') {
+                title.textContent = 'Upload Questions for KBC Mode';
+                title.style.color = '#fbbf24';
+            } else {
+                title.textContent = 'Upload Questions for Classic Mode';
+                title.style.color = 'var(--primary-purple)';
+            }
+        }
 
         // Views
         const views = {
@@ -132,10 +179,72 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
-                parseAiken(text);
+                if (file.name.toLowerCase().endsWith('.xml')) {
+                    parseXML(text);
+                } else {
+                    parseAiken(text);
+                }
             };
             reader.readAsText(file);
         });
+
+        function parseXML(text) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(text, "text/xml");
+            
+            if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                document.getElementById('setup-error').textContent = 'Invalid XML format.';
+                document.getElementById('setup-preview').classList.add('hidden');
+                return;
+            }
+
+            const questions = [];
+            const questionNodes = xmlDoc.getElementsByTagName('question');
+            
+            for (let i = 0; i < questionNodes.length; i++) {
+                const qNode = questionNodes[i];
+                if (qNode.getAttribute('type') === 'category') continue;
+
+                const textNode = qNode.querySelector('questiontext text') || qNode.querySelector('text');
+                if (!textNode) continue;
+                const qText = textNode.textContent.trim();
+
+                const answerNodes = qNode.getElementsByTagName('answer') || qNode.getElementsByTagName('option');
+                if (answerNodes.length === 0) continue;
+
+                const options = [];
+                let correctAnswerIndex = 0;
+
+                for (let j = 0; j < answerNodes.length; j++) {
+                    const aNode = answerNodes[j];
+                    const aTextNode = aNode.querySelector('text');
+                    const aText = aTextNode ? aTextNode.textContent.trim() : aNode.textContent.trim();
+                    options.push(aText);
+
+                    const fraction = aNode.getAttribute('fraction');
+                    if (fraction === "100" || aNode.getAttribute('correct') === "true") {
+                        correctAnswerIndex = j;
+                    }
+                }
+
+                questions.push({
+                    text: qText,
+                    options: options,
+                    correctAnswerIndex: correctAnswerIndex,
+                    timeLimit: 20
+                });
+            }
+
+            if (questions.length > 0) {
+                parsedQuestions = questions;
+                document.getElementById('q-count').textContent = questions.length;
+                document.getElementById('setup-preview').classList.remove('hidden');
+                document.getElementById('setup-error').textContent = '';
+            } else {
+                document.getElementById('setup-error').textContent = 'Could not find valid questions in XML file.';
+                document.getElementById('setup-preview').classList.add('hidden');
+            }
+        }
 
         function parseAiken(text) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
@@ -182,11 +291,19 @@
 
         // Host Actions
         document.getElementById('create-btn').addEventListener('click', () => {
-            socket.emit('host-create-quiz', { questions: parsedQuestions });
+            socket.emit('host-create-quiz', { questions: parsedQuestions, mode: selectedMode });
         });
 
-        socket.on('quiz-created', ({ pin }) => {
+        socket.on('quiz-created', ({ pin, mode }) => {
             currentPin = pin;
+            currentMode = mode;
+            
+            if (mode === 'kbc') {
+                document.body.classList.add('kbc-theme');
+            } else {
+                document.body.classList.remove('kbc-theme');
+            }
+
             document.getElementById('lobby-pin').textContent = pin;
             showView('lobby');
         });
@@ -286,14 +403,18 @@
                 li.style.padding = '1rem 1.5rem';
                 li.style.marginBottom = '0';
                 
+                const scoreDisplay = currentMode === 'kbc' 
+                    ? `₹ ${p.score.toLocaleString()}` 
+                    : `${p.score} <span style="font-size: 1rem; color: var(--text-muted);">pts</span>`;
+
                 li.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
                         <div style="min-width: 40px; text-align: center;">${rankIcon}</div>
                         <span style="font-size: 1.6rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 900;">${p.name}</span>
                         ${streakBadge}
                     </div>
-                    <div style="font-size: 1.8rem; font-weight: 900; color: var(--primary-purple); background: #f8fafc; padding: 0.5rem 1rem; border-radius: 12px; text-align: right; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; white-space: nowrap; margin-left: 1rem;">
-                        ${p.score} <span style="font-size: 1rem; color: var(--text-muted);">pts</span>
+                    <div style="font-size: 1.8rem; font-weight: 900; background: ${currentMode === 'kbc' ? '#0f172a' : '#f8fafc'}; color: ${currentMode === 'kbc' ? '#fbbf24' : 'var(--primary-purple)'}; padding: 0.5rem 1rem; border-radius: 12px; text-align: right; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid ${currentMode === 'kbc' ? '#fbbf24' : '#e2e8f0'}; white-space: nowrap; margin-left: 1rem;">
+                        ${scoreDisplay}
                     </div>
                 `;
                 list.appendChild(li);
@@ -307,6 +428,7 @@
         });
 
         socket.on('quiz-ended', (data) => {
+            fullReportData = data.fullReport;
             const container = document.getElementById('podium-container');
             container.innerHTML = '';
             
@@ -342,6 +464,36 @@
             });
             
             showView('end');
+        });
+
+        document.getElementById('replay-btn').addEventListener('click', () => {
+            socket.emit('host-replay-quiz', currentPin);
+        });
+
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
+            if (!fullReportData) return;
+            
+            let csv = 'Player Name,Total Score,Final Streak,Question Number,Question Text,Correct?,Time Elapsed (s),Points Earned\\n';
+            
+            fullReportData.forEach(player => {
+                if (player.history && player.history.length > 0) {
+                    player.history.forEach(h => {
+                        csv += `"${player.name}",${player.score},${player.streak},${h.questionNumber},"${h.questionText.replace(/"/g, '""')}",${h.correct ? 'Yes' : 'No'},${h.timeElapsed},${h.points}\\n`;
+                    });
+                } else {
+                    csv += `"${player.name}",${player.score},${player.streak},,,,\\n`;
+                }
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `ClassQuiz_Report_${currentPin}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         });
 
         document.getElementById('home-btn').addEventListener('click', () => {
