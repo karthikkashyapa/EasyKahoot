@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClassQuiz - Host</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@tabler/icons@1.74.0/icons.js"></script>
 </head>
@@ -24,9 +24,10 @@
         </div>
 
         <!-- Lobby View -->
-        <div id="view-lobby" class="glass-panel animate-fade-in hidden" style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+        <div id="view-lobby" class="glass-panel animate-fade-in hidden" style="text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <img src="mascot.jpg" alt="Mascot" style="width: 150px; height: 150px; border-radius: 50%; border: 6px solid var(--primary-purple); box-shadow: 0 0 30px rgba(0,0,0,0.2); object-fit: cover; margin-bottom: 2rem; animation: popIn 0.5s ease 0.2s both, float 3s ease-in-out infinite;">
             <h2 style="font-size: 2.5rem; color: var(--text-muted);">Join at <span style="color: var(--primary-blue);">localhost:3000</span></h2>
-            <div class="pin-display" id="lobby-pin">------</div>
+            <div class="pin-display" id="lobby-pin" style="margin: 1rem 0;">------</div>
             <div class="flex-between" style="max-width: 500px; margin: 0 auto; width: 100%; background: #f1f5f9; padding: 1rem 2rem; border-radius: 16px;">
                 <p style="font-size: 1.5rem; font-weight: bold;"><span id="player-count">0</span> Players</p>
                 <button id="start-btn" class="btn btn-success" style="font-size: 1.5rem;" disabled>Start Quiz</button>
@@ -60,24 +61,31 @@
         </div>
 
         <!-- Leaderboard View -->
-        <div id="view-leaderboard" class="glass-panel animate-fade-in hidden" style="flex: 1; max-width: 800px; margin: 0 auto; width: 100%;">
-            <div class="flex-between">
-                <h1 class="title-text" style="color: var(--primary-purple); margin:0;">Leaderboard</h1>
-                <button id="next-btn" class="btn btn-primary" style="font-size: 1.5rem; padding: 1rem 3rem;">Next Question</button>
+        <div id="view-leaderboard" class="glass-panel animate-fade-in hidden" style="flex: 1; max-width: 1000px; margin: 0 auto; width: 100%;">
+            <div class="flex-between" style="background: rgba(255, 255, 255, 0.95); padding: 1.5rem 2rem; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 2rem;">
+                    <img src="mascot.jpg" alt="Mascot" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--primary-purple); box-shadow: 0 0 20px rgba(0,0,0,0.2); object-fit: cover;">
+                    <div style="text-align: left;">
+                        <h1 class="title-text" style="color: var(--primary-purple); margin:0; font-size: 3rem;">Leaderboard</h1>
+                        <p style="color: var(--text-muted); font-size: 1.2rem; font-weight: bold; margin-top: 0.5rem; margin-bottom: 0;">Top 10 Performers!</p>
+                    </div>
+                </div>
+                <button id="next-btn" class="btn btn-primary" style="font-size: 1.5rem; padding: 1rem 3rem; box-shadow: 0 8px 0 #312e81;">Next Question</button>
             </div>
             
             <div id="correct-answer-display" style="margin: 2rem 0; padding: 1.5rem; background: #dcfce7; border-radius: 12px; border: 2px solid #22c55e; color: #166534; font-size: 1.5rem; text-align: center;">
                 Correct Answer: <span id="correct-answer-text" style="font-weight: 900;"></span>
             </div>
 
-            <ul class="leaderboard-list" id="leaderboard-list">
+            <ul class="leaderboard-list" id="leaderboard-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1rem;">
                 <!-- Leaderboard items -->
             </ul>
         </div>
 
         <!-- End View -->
-        <div id="view-end" class="glass-panel animate-fade-in hidden" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center;">
-            <h1 style="font-size: 5rem; margin-bottom: 3rem; background: -webkit-linear-gradient(45deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Montserrat', sans-serif; font-weight: 900;">Podium</h1>
+        <div id="view-end" class="glass-panel animate-fade-in hidden" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <img src="mascot.jpg" alt="Mascot" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid #f59e0b; box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); object-fit: cover; margin-bottom: 1rem; animation: popIn 0.5s ease 0.2s both;">
+            <h1 style="font-size: 5rem; margin-bottom: 3rem; background: -webkit-linear-gradient(45deg, #f59e0b, #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">Podium</h1>
             
             <div id="podium-container" style="display: flex; justify-content: center; align-items: flex-end; height: 350px; gap: 1rem; margin-bottom: 3rem;">
                 <!-- Podium bars will be injected here -->
@@ -275,13 +283,16 @@
                     ? `<span style="font-size: 1.2rem; background: #fee2e2; padding: 0.2rem 0.8rem; border-radius: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 4px;">🔥 ${p.streak}</span>` 
                     : '';
 
+                li.style.padding = '1rem 1.5rem';
+                li.style.marginBottom = '0';
+                
                 li.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 1.5rem; flex: 1;">
-                        <div style="min-width: 50px; text-align: center;">${rankIcon}</div>
-                        <span style="font-size: 1.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 400px;">${p.name}</span>
+                    <div style="display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0;">
+                        <div style="min-width: 40px; text-align: center;">${rankIcon}</div>
+                        <span style="font-size: 1.6rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 900;">${p.name}</span>
                         ${streakBadge}
                     </div>
-                    <div style="font-size: 2rem; font-weight: 900; color: var(--primary-purple); background: #f8fafc; padding: 0.5rem 1.5rem; border-radius: 12px; min-width: 150px; text-align: right; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                    <div style="font-size: 1.8rem; font-weight: 900; color: var(--primary-purple); background: #f8fafc; padding: 0.5rem 1rem; border-radius: 12px; text-align: right; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; white-space: nowrap; margin-left: 1rem;">
                         ${p.score} <span style="font-size: 1rem; color: var(--text-muted);">pts</span>
                     </div>
                 `;

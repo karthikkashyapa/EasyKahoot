@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Nunito:wght@600;700;800&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
 :root {
     /* Dynamic Animated Background */
     --primary-purple: #46178f;
@@ -31,7 +30,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 body {
@@ -52,9 +51,10 @@ body {
 }
 
 h1, h2, h3 {
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 800;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
 }
 
 .title-text {
@@ -80,7 +80,7 @@ h1, h2, h3 {
     border-radius: 12px;
     padding: 1rem 2rem;
     font-size: 1.2rem;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -161,6 +161,12 @@ input[type="text"]:focus {
     100% { transform: scale(1); opacity: 1; }
 }
 
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
 .animate-fade-in {
     animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
@@ -187,7 +193,7 @@ input[type="text"]:focus {
     border-radius: 16px;
     padding: 2rem;
     font-size: 1.8rem;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 700;
     color: white;
     cursor: pointer;
@@ -223,7 +229,7 @@ input[type="text"]:focus {
 /* Host PIN Display */
 .pin-display {
     font-size: 6rem;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 900;
     letter-spacing: 8px;
     text-align: center;

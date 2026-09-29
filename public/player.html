@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ClassQuiz - Player</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,9 +20,10 @@
         
         <!-- Waiting View -->
         <div id="view-waiting" class="glass-panel animate-fade-in text-center" style="max-width: 400px; margin: auto; width: 100%;">
+            <img src="mascot.jpg" alt="Waiting..." style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--primary-purple); box-shadow: 0 0 20px rgba(0,0,0,0.2); object-fit: cover; margin-bottom: 1.5rem; animation: float 3s ease-in-out infinite;">
             <h2 id="waiting-msg">You're in!</h2>
-            <p style="margin-top: 1rem; color: var(--text-muted);">See your nickname on screen</p>
-            <div class="spinner" style="margin: 2rem auto; width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--accent-color); animation: spin 1s ease-in-out infinite;"></div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 1.2rem; font-weight: bold;">See your nickname on screen</p>
+            <div class="spinner" style="margin: 2rem auto; width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary-purple); animation: spin 1s ease-in-out infinite;"></div>
         </div>
 
         <!-- Question View -->
@@ -45,8 +46,9 @@
 
         <!-- Answer Waiting View (After picking option) -->
         <div id="view-answer-waiting" class="glass-panel animate-fade-in hidden text-center" style="max-width: 400px; margin: auto; width: 100%;">
+            <img src="mascot.jpg" alt="Thinking..." style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--primary-blue); box-shadow: 0 0 20px rgba(0,0,0,0.2); object-fit: cover; margin-bottom: 1.5rem; animation: float 3s ease-in-out infinite;">
             <h2>Waiting for others...</h2>
-            <p style="margin-top: 1rem; color: var(--text-muted);">Did you get it right?</p>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 1.2rem; font-weight: bold;">Did you get it right?</p>
         </div>
 
         <!-- Result View -->
@@ -69,8 +71,9 @@
 
         <!-- Final End View -->
         <div id="view-end" class="glass-panel animate-fade-in hidden text-center" style="max-width: 400px; margin: auto; width: 100%;">
+            <img src="mascot.jpg" alt="Finished!" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid #f59e0b; box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); object-fit: cover; margin-bottom: 1.5rem;">
             <h2>Quiz Ended!</h2>
-            <p style="margin-top: 1rem;">Check the big screen for the final podium.</p>
+            <p style="margin-top: 1rem; font-size: 1.2rem; color: var(--text-muted); font-weight: bold;">Check the big screen for the final podium.</p>
             <button id="home-btn" class="btn btn-primary" style="margin-top: 2rem; width: 100%;">Play Again</button>
         </div>
 
