@@ -305,7 +305,7 @@ io.on('connection', (socket) => {
             .map(p => ({ name: p.name, score: p.score, streak: p.streak }))
             .sort((a, b) => b.score - a.score);
 
-        const topPlayers = playersList.slice(0, 5); // Top 5
+        const topPlayers = playersList.slice(0, 10); // Top 10
 
         // Calculate stats for host
         const stats = {
