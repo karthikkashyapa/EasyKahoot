@@ -369,15 +369,17 @@ input[type="text"]:focus {
 
 /* KBC Theme Overrides */
 body.kbc-theme {
+    --text-main: #f8fafc;
+    --text-muted: #cbd5e1;
+    --primary-purple: #fbbf24;
     background: linear-gradient(-45deg, #0f172a, #1e3a8a, #312e81, #000000) !important;
     animation: none !important;
-    color: #f8fafc;
+    color: var(--text-main);
 }
 body.kbc-theme .glass-panel {
     background: rgba(15, 23, 42, 0.85);
     border: 1px solid #fbbf24;
     box-shadow: 0 10px 40px rgba(251, 191, 36, 0.15);
-    color: white;
 }
 body.kbc-theme .title-text, body.kbc-theme h1, body.kbc-theme h2 {
     color: #fbbf24 !important;
